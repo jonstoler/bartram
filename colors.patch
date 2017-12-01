@@ -1,0 +1,62 @@
+diff --git a/colors.c b/colors.c
+index 4c1786c..98d4312 100644
+--- a/colors.c
++++ b/colors.c
+@@ -43,6 +43,7 @@ int rflag;
+ int hflag;
+ int pflag;
+ int vflag;
++int tflag;
+ 
+ int
+ distance(struct point *p1, struct point *p2)
+@@ -315,6 +316,26 @@ usage(void)
+ 	exit(1);
+ }
+ 
++void parseimg_plain(FILE *fp, void (*fn)(int, int, int)){
++	do {
++		int c;
++		if((c = getc(fp)) != EOF){
++			ungetc(c, fp);
++		} else { break; }
++		char color[7] = "000000";
++		getc(fp); // skip #
++		for(int i = 0; i < 6; i++){
++			color[i] = getc(fp);
++		}
++		long clr = strtol(color, 0, 16);
++		int r, g, b;
++		r = (clr & 0xff0000) >> 16;
++		g = (clr & 0xff00) >> 8;
++		b = (clr & 0xff);
++		fn(r, g, b);
++	} while (getc(fp) != EOF);
++}
++
+ int
+ main(int argc, char *argv[])
+ {
+@@ -322,6 +343,9 @@ main(int argc, char *argv[])
+ 	int c;
+ 
+ 	ARGBEGIN {
++	case 't':
++		tflag = 1;
++		break;
+ 	case 'e':
+ 		eflag = 1;
+ 		break;
+@@ -357,7 +381,11 @@ main(int argc, char *argv[])
+ 
+ 	RB_INIT(&pointhead);
+ 
+-	(c == 'f' ? parseimg_ff : parseimg_png)(stdin, fillpoints);
++	if (tflag) {
++		parseimg_plain(stdin, fillpoints);
++	} else {
++		(c == 'f' ? parseimg_ff : parseimg_png)(stdin, fillpoints);
++	}
+ 
+ 	initcluster = initcluster_greyscale;
+ 	initspace = 256;
